@@ -79,9 +79,7 @@ def prueba_reinas(n, metodo):
 
 if __name__ == "__main__":
 
-
     # Utilizando consistencia
-
     prueba_reinas(4, csp.solucion_CSP_bin)
     prueba_reinas(8, csp.solucion_CSP_bin)
     prueba_reinas(16, csp.solucion_CSP_bin)

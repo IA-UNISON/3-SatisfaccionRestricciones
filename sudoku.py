@@ -108,7 +108,7 @@ if __name__ == "__main__":
 
 
     #===========================================================================
-    # Una forma de verificas si el código que escribiste es correcto
+    # Una forma de verificar si el código que escribiste es correcto
     # es verificando que la solución sea satisfactoria para estos dos
     # sudokus. (20 puntos)
     #===========================================================================
