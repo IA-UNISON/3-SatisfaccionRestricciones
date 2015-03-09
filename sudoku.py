@@ -7,9 +7,7 @@ sudoku.py
 Este es el problema que deberán resolver para la tarea 2 sobre satisfacción de restricciones.
 
 En esta tarea no se pide desarrollar o modificar los algoritmos de satisfacción de restricciones
-que se ofrecen, sino de utilizarlos para resolver un problema relativamente simple:
-
-    Un solucionador de sudokus
+que se ofrecen, sino de utilizarlos para resolver un problema relativamente simple: Un solucionador de sudokus
 
 Los Sudokus son unos juegos de origen Japones. El juego tiene un tablero de 9 x 9 casillas.
 En cada casilla se debe asignar un número 1, 2, 3, 4, 5, 6, 7, 8 o 9.
