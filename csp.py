@@ -13,7 +13,6 @@ En particular se implementan los algoritmos de forward checking y
 el de arco consistencia. Así como el algoritmo de min-conflics.
 
 En este modulo no es necesario modificar nada.
-
 """
 
 __author__ = 'juliowaissman'
