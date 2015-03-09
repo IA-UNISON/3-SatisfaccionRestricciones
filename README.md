@@ -1,4 +1,4 @@
-Tarea 04: Problemas de Satisfacción de Restricciones
+Tarea 4: Problemas de Satisfacción de Restricciones
 =====================================================
 
 **Feacha de entrega: 23 de marzo de 2015**
