@@ -1,6 +1,8 @@
 Tarea 04: Problemas de Satisfacción de Restricciones
 =====================================================
 
+**Feacja de entrega: 23 de marzo de 2015**
+
 Objetivo
 ---------
 
@@ -32,3 +34,4 @@ Lo que hay que hacer en este trabajo es:
 5. En el archivo `nreinasCSP.py` Probar el algoritmo de mínimos conflictos y compararlo con el de búsqueda en grafos de
    restriccion y reportar las diferencias encontradas.
    
+
