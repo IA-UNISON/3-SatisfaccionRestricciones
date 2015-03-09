@@ -1,7 +1,7 @@
 Tarea 04: Problemas de Satisfacción de Restricciones
 =====================================================
 
-**Feacja de entrega: 23 de marzo de 2015**
+**Feacha de entrega: 23 de marzo de 2015**
 
 Objetivo
 ---------
