@@ -1,7 +1,7 @@
 Tarea 4: Problemas de Satisfacción de Restricciones
 =====================================================
 
-**Feacha de entrega: 23 de marzo de 2015**
+**Feacha de entrega: 18 de marzo de 2015**
 
 Objetivo
 ---------
@@ -17,21 +17,26 @@ Tareas a desarrollar
 
 Lo que hay que hacer en este trabajo es:
 
-1. En el archivo `sudoku.py` se ofrece una explicación breve del juego del sudoku, cual es el onjetivo
+1. En el archivo `csp.py` agregar el método de AC3 a la función de consistencia como se vio en clase.
+   
+2. En el archivo `nreinasCSP.py` Probar el algoritmo de busqueda con 2-consistencia y compararlo con el 
+   de 1-consistencia y reportar las diferencias encontradas (25 puntos).
+
+3. En el archivo `sudoku.py` se ofrece una explicación breve del juego del sudoku, cual es el objetivo
    y cual es la forma en que buscamos formalizar el estado con un arreglo de 81 valores. Una vez comprendido
    el problema y la representación, el dominio de cada variable es ya programado por el profesor. El alumno
-   deberá ser capaz de definir los vecinos de cada variable (20 puntos).
+   deberá ser capaz de definir los vecinos de cada variable (25 puntos).
    
-2. En el archivo `sudoku.py`, desarrollar la restriccion binaria para dos variables que se asumen son vecinos
-   (20 puntos).
+4. En el archivo `sudoku.py`, desarrollar la restriccion binaria para dos variables que se asumen son vecinos
+   (25 puntos).
 
-3. En el archivo `sudoku.py` probar y encontrar la solución para los dos sudokus que en internet se presentan como los
-   más dificiles de resolver por un humano. Verificar la solución (20 puntos).
+5. En el archivo `sudoku.py` probar y encontrar la solución para los dos sudokus que en internet se presentan como los
+   más dificiles de resolver por un humano. Verificar la solución.
    
-4. En el archivo `csp.py` agregar el método de solución de problemas de satisfacción de restricciones binarias conocido como 
+6. En el archivo `csp.py` agregar el método de solución de problemas de satisfacción de restricciones binarias conocido como 
    **mínimos conflictos**, el cual se vió en clase.
    
-5. En el archivo `nreinasCSP.py` Probar el algoritmo de mínimos conflictos y compararlo con el de búsqueda en grafos de
-   restriccion y reportar las diferencias encontradas.
+7. En el archivo `nreinasCSP.py` Probar el algoritmo de mínimos conflictos y compararlo con el de búsqueda en grafos de
+   restriccion y reportar las diferencias encontradas (25 puntos).
    
 
