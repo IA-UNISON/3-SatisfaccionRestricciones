@@ -4,11 +4,6 @@
 sudoku.py
 ------------
 
-Este es el problema que deberán resolver para la tarea 2 sobre satisfacción de restricciones.
-
-En esta tarea no se pide desarrollar o modificar los algoritmos de satisfacción de restricciones
-que se ofrecen, sino de utilizarlos para resolver un problema relativamente simple: Un solucionador de sudokus
-
 Los Sudokus son unos juegos de origen Japones. El juego tiene un tablero de 9 x 9 casillas.
 En cada casilla se debe asignar un número 1, 2, 3, 4, 5, 6, 7, 8 o 9.
 
@@ -41,9 +36,7 @@ Un Sudoku se inicializa como una lista de 81 valores donde los valores se encuen
 
 hasta llegar a la posición 81.
 
-
-los valores que puede tener la lista son del 0 al 9. Si tiene un 0 entonces es que el valor es desconocido.
-
+Los valores que puede tener la lista son del 0 al 9. Si tiene un 0 entonces es que el valor es desconocido.
 
 """
 
@@ -53,7 +46,7 @@ __author__ = 'juliowaissman'
 import csp
 
 
-class Sudoku(csp.ProblemaCSP):
+class Sudoku(csp.GrafoRestriccion):
     """
     Esta es la clase que tienen que desarrollar y comentar. Las variables están dadas
     desde 0 hasta 81 (un vector) tal como dice arriba. No modificar nada de lo escrito
@@ -66,15 +59,17 @@ class Sudoku(csp.ProblemaCSP):
         Inicializa el sudoku
 
         """
-        csp.ProblemaCSP.__init__(self)
+        csp.GrafoRestriccion.__init__(self)
 
         self.dominio = {i: [val] if val > 0 else range(1, 10) for (i, val) in enumerate(pos_ini)}
 
+        vecinos = {}
         #=================================================================
-        # 20 puntos: INSERTAR SU CÓDIGO AQUI (para vecinos)
+        # 25 puntos: INSERTAR SU CÓDIGO AQUI (para vecinos)
         #=================================================================
 
-        raise NotImplementedError("¡Es parte de la tarea completar este método!")
+        if not vecinos:
+            raise NotImplementedError("¡Es parte de la tarea completar este método!")
 
     def restriccion_binaria(self, (xi, vi), (xj, vj)):
         """
@@ -82,7 +77,7 @@ class Sudoku(csp.ProblemaCSP):
 
         """
         #===========================================================================
-        # 20 puntos: INSERTAR SU CÓDIGO AQUI (restricciones entre variables vecinas)
+        # 25 puntos: INSERTAR SU CÓDIGO AQUI (restricciones entre variables vecinas)
         #===========================================================================
         raise NotImplementedError("¡Es parte de la tarea implementar este método!")
 
@@ -101,14 +96,10 @@ class Sudoku(csp.ProblemaCSP):
 
 
 if __name__ == "__main__":
-
-    # Vamos a poner unos sudokus famosos pa empezar
-
-
     #===========================================================================
     # Una forma de verificar si el código que escribiste es correcto
     # es verificando que la solución sea satisfactoria para estos dos
-    # sudokus. (20 puntos)
+    # sudokus.
     #===========================================================================
 
     s1 = [0, 0, 3, 0, 2, 0, 6, 0, 0,
