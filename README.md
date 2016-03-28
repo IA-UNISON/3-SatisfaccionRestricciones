@@ -1,7 +1,6 @@
 Tarea 4: Problemas de Satisfacción de Restricciones
 =====================================================
 
-**Feacha de entrega: 18 de octubre de 2015**
 
 Objetivo
 ---------
