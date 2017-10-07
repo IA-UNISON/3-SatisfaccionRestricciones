@@ -18,10 +18,26 @@ En este modulo no es necesario modificar nada.
 
 __author__ = 'juliowaissman'
 
+from collections import deque
 
 class GrafoRestriccion(object):
     """
-    Clase abstracta para hacer un grafo de restricción 
+    Clase abstracta para hacer un grafo de restricción
+
+    El grafo de restricción se representa por:
+
+    1. dominio: Un diccionario cuyas llaves son las variables (vertices)
+                del grafo de restricción, y cuyo valor es un conjunto
+                (objeto set en python) con los valores que puede tomar.
+
+    2. vecinos: Un diccionario cuyas llaves son las variables (vertices)
+                del grafo de restricción, y cuyo valor es un conjunto
+                (objeto set en python) con las variables con las que
+                tiene restricciones binarias.
+
+    3. restriccion: Un método que recibe dos variables y sus respectivos
+                    valores y regresa True/False si la restricción se cumple
+                    o no.
 
     """
 
@@ -34,7 +50,7 @@ class GrafoRestriccion(object):
         self.vecinos = {}
         self.backtracking = 0  # Solo para efectos de comparación
 
-    def restricción(self, xi_vi, xj_vj):
+    def restriccion(self, xi_vi, xj_vj):
         """
         Verifica si se cumple la restriccion binaria entre las variables xi
         y xj cuando a estas se le asignan los valores vi y vj respectivamente.
@@ -71,30 +87,42 @@ def asignacion_grafo_restriccion(gr, ap={}, consist=1, traza=False):
 
     """
 
+    #  Checa si la asignación completa y devuelve el resultado de ser el caso
     if set(ap.keys()) == set(gr.dominio.keys()):
-        #  Asignación completa
         return ap.copy()
 
+    # Selección de variables, el código viene más adelante
     var = selecciona_variable(gr, ap)
 
+    # Los valores se ordenan antes de probarlos
     for val in ordena_valores(gr, ap, var):
 
-        dominio = consistencia(gr, ap, var, val, consist)
+        # Función con efecto colateral, en dominio
+        # si no es None, se tiene los valores que se
+        # redujeron del dominio del objeto gr. Al salir
+        # del ciclo for, se debe de restaurar el dominio
+        dominio_reducido = consistencia(gr, ap, var, val, consist)
 
-        if dominio is not None:
-            for variable in dominio:
-                for valor in dominio[variable]:
-                    gr.dominio[variable].remove(valor)
+        if dominio_reducido is not None:
+
+            # Se realiza la asignación de esta variable
             ap[var] = val
 
+            # Solo para efectos de impresión
             if traza:
                 print(((len(ap) - 1) * '\t') + "{} = {}".format(var, val))
 
+            for x in gr.dominio.keys():
+                print("D[{}] = {}".format(x, gr.dominio[x]))
+
+            # Se manda llamar en forma recursiva (búsqueda en profundidad)
             apn = asignacion_grafo_restriccion(gr, ap, consist, traza)
 
-            for variable in dominio:
-                gr.dominio[variable] += dominio[variable]
+            # Restaura el dominio
+            for v in dominio_reducido:
+                gr.dominio[v] = gr.dominio[v].union(dominio_reducido[v])
 
+            # Si la asignación es completa revuelve el resultado
             if apn is not None:
                 return apn
             del ap[var]
@@ -103,48 +131,125 @@ def asignacion_grafo_restriccion(gr, ap={}, consist=1, traza=False):
 
 
 def selecciona_variable(gr, ap):
+    """
+    Selecciona la variable a explorar, para usar dentro de
+    la función asignacion_grafo_restriccion
+
+    @param gr: Objeto tipo GrafoRestriccion
+    @param ap: Un diccionario con una asignación parcial
+
+    @return: Una variable de gr.dominio.keys()
+
+    """
+    # Si no hay variables en la asignación parcial, se usa el grado heurístico
     if len(ap) == 0:
-        return max(gr.dominio.keys(), key=lambda v: gr.vecinos[v])
+        return max(gr.dominio.keys(), key=lambda v: len(gr.vecinos[v]))
+    # Si hay variables, entonces se selecciona
+    # la variable con el dominio más pequeño
     return min([var for var in gr.dominio.keys() if var not in ap],
                key=lambda v: len(gr.dominio[v]))
 
 
 def ordena_valores(gr, ap, xi):
+    """
+    Ordena los valores del dominio de una variable de acuerdo
+    a los que restringen menos los dominios de las variables
+    vecinas. Para ser usada dentro de la función
+    asignacion_grafo_restriccion.
+
+    @param gr: Objeto tipo GrafoRestriccion
+    @param ap: Un diccionario con una asignación parcial
+    @param xi: La variable a ordenar los valores
+
+    @return: Un generador con los valores de gr.dominio[xi] ordenados
+
+    """
     def conflictos(vi):
-        acc = 0
-        for xj in gr.vecinos[xi]:
-            if xi not in ap:
-                for vj in gr.dominio[xj]:
-                    if not gr.restricción((xi, vi), (xj, vj)):
-                        acc += 1
-        return acc
+        return sum((1 for xj in gr.vecinos[xi] if xj not in ap
+                    for vj in gr.dominio[xj]
+                    if gr.restriccion((xi, vi), (xj, vj))))
     return sorted(gr.dominio[xi], key=conflictos, reverse=True)
 
 
 def consistencia(gr, ap, xi, vi, tipo):
-    if tipo == 0:
-        for (xj, vj) in ap.iteritems():
-            if xj in gr.vecinos[xi] and not gr.restricción((xi, vi), (xj, vj)):
-                return None
-        return {}
+    """
+    Calcula la consistencia y reduce el dominio de las variables, de
+    acuerdo al grado de la consistencia. Si la consistencia es:
 
-    dominio = {}
+        0: Reduce el dominio de la variable en cuestión
+        1: Reduce el dominio de la variable en cuestion
+           y las variables vecinas que tengan valores que
+           se reduzcan con ella.
+        2: Reduce los valores de todas las variables que tengan
+           como vecino una variable que redujo su valor. Para
+           esto se debe usar el algoritmo AC-3.
+
+    @param gr: Objeto tipo GrafoRestriccion
+    @param ap: Un diccionario con una asignación parcial
+    @param xi: La variable a ordenar los valores
+    @param vi: Un valor que puede tomar xi
+
+    @return: Un diccionario con el dominio que se redujo (como efecto
+             colateral), a gr.dominio
+
+    """
+    # Primero reducimos el dominio de la variable de interes si no tiene
+    # conflictos con la asignación previa.
+    dom_red = {}
+    for (xj, vj) in ap.items():
+        if xj in gr.vecinos[xi] and not gr.restriccion((xi, vi), (xj, vj)):
+            return None
+    dom_red[xi] = {v for v in gr.dominio[xi] if v != vi}
+    gr.dominio[xi] = {vi}
+
+    # Tipo 1: lo claramente sensato
     if tipo == 1:
-        for xj in gr.vecinos[xi]:
-            if xj not in ap:
-                dominio[xj] = []
-                for vj in gr.dominio[xj]:
-                    if not gr.restricción((xi, vi), (xj, vj)):
-                        dominio[xj].append(vj)
-                if len(dominio[xj]) == len(gr.dominio[xj]):
-                    return None
-        return dominio
+        pendientes = deque([(xj, xi) for xj in gr.vecinos[xi] if xj not in ap])
+        while pendientes:
+            xa, xb = pendientes.popleft()
+            if reduceAC3(xa, xb, gr, dom_red):
+                if not gr.dominio[xa]:
+                    for v in dom_red.keys():
+                        gr.dominio[v] = gr.dominio[v].union(dom_red[v])
+                        return None
+
+    # Tipo 2: lo ya no tan claramente sensato
     if tipo == 2:
-        raise NotImplementedError("AC-3  a implementar")
-        # ================================================
-        #    Implementar el algoritmo de AC3
-        #    y probarlo con las n-reinas
-        # ================================================
+        pendientes = deque([(xj, xi) for xj in gr.vecinos[xi] if xj not in ap])
+        while pendientes:
+            xa, xb = pendientes.popleft()
+            if reduceAC3(xa, xb, gr, dom_red):
+                if len(gr.dominio[xa]) == 0:
+                    for v in dom_red.keys():
+                        gr.dominio[v] = gr.dominio[v].union(dom_red[v])
+                        return None
+                for xc in gr.vecinos[xa]:
+                    if xc != xi and xc not in ap:
+                        pendientes.append((xc, xa))
+    return dom_red
+
+    # raise NotImplementedError("AC-3  a implementar")
+    # ================================================
+    #    Implementar el algoritmo de AC3
+    #    y probarlo con las n-reinas
+    # ================================================
+
+
+def reduceAC3(xa, xb, gr, dom_red):
+    redujo = False
+    valores_xa = list(gr.dominio[xa])
+    for va in valores_xa:
+        for vb in gr.dominio[xb]:
+            if gr.restriccion((xa, va), (xb, vb)):
+                break
+        else:
+            if xa in dom_red:
+                dom_red[xa].add(va)
+            else:
+                dom_red[xa] = {va}
+            gr.dominio[xa].discard(va)
+            redujo = True
+    return redujo
 
 
 def min_conflictos(gr, rep=100, maxit=100):
