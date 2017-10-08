@@ -20,6 +20,7 @@ __author__ = 'juliowaissman'
 
 from collections import deque
 
+
 class GrafoRestriccion(object):
     """
     Clase abstracta para hacer un grafo de restricción
@@ -104,7 +105,6 @@ def asignacion_grafo_restriccion(gr, ap={}, consist=1, traza=False):
         dominio_reducido = consistencia(gr, ap, var, val, consist)
 
         if dominio_reducido is not None:
-
             # Se realiza la asignación de esta variable
             ap[var] = val
 
@@ -112,14 +112,11 @@ def asignacion_grafo_restriccion(gr, ap={}, consist=1, traza=False):
             if traza:
                 print(((len(ap) - 1) * '\t') + "{} = {}".format(var, val))
 
-            for x in gr.dominio.keys():
-                print("D[{}] = {}".format(x, gr.dominio[x]))
-
             # Se manda llamar en forma recursiva (búsqueda en profundidad)
             apn = asignacion_grafo_restriccion(gr, ap, consist, traza)
 
             # Restaura el dominio
-            for v in dominio_reducido:
+            for v in dominio_reducido.keys():
                 gr.dominio[v] = gr.dominio[v].union(dominio_reducido[v])
 
             # Si la asignación es completa revuelve el resultado
@@ -168,7 +165,7 @@ def ordena_valores(gr, ap, xi):
         return sum((1 for xj in gr.vecinos[xi] if xj not in ap
                     for vj in gr.dominio[xj]
                     if gr.restriccion((xi, vi), (xj, vj))))
-    return sorted(gr.dominio[xi], key=conflictos, reverse=True)
+    return sorted(list(gr.dominio[xi]), key=conflictos, reverse=True)
 
 
 def consistencia(gr, ap, xi, vi, tipo):
@@ -203,53 +200,51 @@ def consistencia(gr, ap, xi, vi, tipo):
     gr.dominio[xi] = {vi}
 
     # Tipo 1: lo claramente sensato
+    # Se ve raro la forma en que lo hice pero es para dejar mas fácil
+    # el desarrollo del algoritmo de AC-3,  y dejar claras las diferencias.
     if tipo == 1:
         pendientes = deque([(xj, xi) for xj in gr.vecinos[xi] if xj not in ap])
         while pendientes:
             xa, xb = pendientes.popleft()
-            if reduceAC3(xa, xb, gr, dom_red):
+            temp = reduceAC3(xa, xb, gr)
+            if temp:
                 if not gr.dominio[xa]:
+                    gr.dominio[xa] = temp
                     for v in dom_red.keys():
                         gr.dominio[v] = gr.dominio[v].union(dom_red[v])
-                        return None
+                    return None
+                if xa not in dom_red:
+                    dom_red[xa] = set({})
+                dom_red[xa] = dom_red[xa].union(temp)
 
     # Tipo 2: lo ya no tan claramente sensato
+    # Al no estar muy bien codificado desde el punto de vista de eficiencia
+    # puede tardar mas (el doble) que la consistencia tipo 1 pero debe de
+    # generar mucho menos backtrackings.
+    #
+    # Por ejemplo, para las 4 reinas deben de ser 0 backtrackings y para las
+    # 101 reina, al rededor de 4
     if tipo == 2:
-        pendientes = deque([(xj, xi) for xj in gr.vecinos[xi] if xj not in ap])
-        while pendientes:
-            xa, xb = pendientes.popleft()
-            if reduceAC3(xa, xb, gr, dom_red):
-                if len(gr.dominio[xa]) == 0:
-                    for v in dom_red.keys():
-                        gr.dominio[v] = gr.dominio[v].union(dom_red[v])
-                        return None
-                for xc in gr.vecinos[xa]:
-                    if xc != xi and xc not in ap:
-                        pendientes.append((xc, xa))
+        # ================================================
+        #    Implementar el algoritmo de AC3
+        #    y print()robarlo con las n-reinas
+        # ================================================
+        raise NotImplementedError("AC-3  a implementar")
+
     return dom_red
 
-    # raise NotImplementedError("AC-3  a implementar")
-    # ================================================
-    #    Implementar el algoritmo de AC3
-    #    y probarlo con las n-reinas
-    # ================================================
 
-
-def reduceAC3(xa, xb, gr, dom_red):
-    redujo = False
+def reduceAC3(xa, xb, gr):
+    reduccion = set([])
     valores_xa = list(gr.dominio[xa])
     for va in valores_xa:
         for vb in gr.dominio[xb]:
             if gr.restriccion((xa, va), (xb, vb)):
                 break
         else:
-            if xa in dom_red:
-                dom_red[xa].add(va)
-            else:
-                dom_red[xa] = {va}
+            reduccion.add(va)
             gr.dominio[xa].discard(va)
-            redujo = True
-    return redujo
+    return reduccion
 
 
 def min_conflictos(gr, rep=100, maxit=100):

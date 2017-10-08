@@ -13,7 +13,7 @@ las casillas no asignadas anteriormente si se considera que:
 
     a) Las casillas horizontales deben tener números diferentes entre si
     b) Las casillas verticales deben tener números diferentes entre si
-    c) Las casillas que pertenecen al mismo grupo deben tener números 
+    c) Las casillas que pertenecen al mismo grupo deben tener números
        diferentes entre si.
 
 Sea (r1, c1) el renglon y la columna de una casilla y (r2, c2) el
@@ -94,7 +94,7 @@ class Sudoku(csp.GrafoRestriccion):
         # =================================================================
         raise NotImplementedError("Implementa la restricción binaria")
 
-    
+
 def imprime_sdk(asignación):
     """
     Imprime un sudoku en pantalla en forma más o menos graciosa. Esta
@@ -133,7 +133,7 @@ if __name__ == "__main__":
     imprime_sdk(s1)
     print("Solucionando un Sudoku dificil")
     sudoku1 = Sudoku(s1)
-    sol1 = csp.solucion_CSP_bin(sudoku1)
+    sol1 = csp.asignacion_grafo_restriccion(sudoku1)
     imprime_sdk(sol1)
 
     s2 = [4, 0, 0, 0, 0, 0, 8, 0, 5,
@@ -149,5 +149,5 @@ if __name__ == "__main__":
     imprime_sdk(s2)
     sudoku2 = Sudoku(s2)
     print("Y otro tambien dificil")
-    sol2 = csp.solucion_CSP_bin(sudoku2)
+    sol2 = csp.asignacion_grafo_restriccion(sudoku2)
     imprime_sdk(sol2)
