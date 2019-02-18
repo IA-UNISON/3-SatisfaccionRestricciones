@@ -21,7 +21,7 @@ __author__ = 'juliowaissman'
 from collections import deque
 
 
-class GrafoRestriccion(object):
+class GrafoRestriccion:
     """
     Clase abstracta para hacer un grafo de restricción
 
@@ -64,12 +64,12 @@ class GrafoRestriccion(object):
         @return: True si se cumple la restricción
 
         """
-        xi, vi = xi_vi
-        xj, vj = xj_vj
+        x_i, v_i = xi_vi
+        x_j, v_j = xj_vj
         raise NotImplementedError("Método a implementar")
 
 
-def asignacion_grafo_restriccion(gr, ap={}, consist=1, traza=False):
+def asignacion_grafo_restriccion(grafo, asignacion=None, consist=1, traza=False):
     """
     Asigación de una solución al grafo de restriccion si existe
     por búsqueda primero en profundidad.
@@ -77,8 +77,8 @@ def asignacion_grafo_restriccion(gr, ap={}, consist=1, traza=False):
     Para utilizarlo con un objeto tipo GrafoRestriccion gr:
     >>> asignacion = asignacion_grafo_restriccion(gr)
 
-    @param gr: Un objeto tipo GrafoRestriccion
-    @param ap: Un diccionario con una asignación parcial
+    @param grafo: Un objeto tipo GrafoRestriccion
+    @param asignacion: Un diccionario con una asignación parcial
     @param consist: Un valor 0, 1 o 2 para máximo grado de consistencia
     @param dmax: Máxima profundidad de recursión, solo por seguridad
     @param traza: Si True muestra el proceso de asignación
@@ -88,87 +88,90 @@ def asignacion_grafo_restriccion(gr, ap={}, consist=1, traza=False):
 
     """
 
+    if asignacion is None:
+        asignacion = {}
+
     #  Checa si la asignación completa y devuelve el resultado de ser el caso
-    if set(ap.keys()) == set(gr.dominio.keys()):
-        return ap.copy()
+    if set(asignacion.keys()) == set(grafo.dominio.keys()):
+        return asignacion.copy()
 
     # Selección de variables, el código viene más adelante
-    var = selecciona_variable(gr, ap)
+    var = selecciona_variable(grafo, asignacion)
 
     # Los valores se ordenan antes de probarlos
-    for val in ordena_valores(gr, ap, var):
+    for val in ordena_valores(grafo, asignacion, var):
 
         # Función con efecto colateral, en dominio
         # si no es None, se tiene los valores que se
         # redujeron del dominio del objeto gr. Al salir
         # del ciclo for, se debe de restaurar el dominio
-        dominio_reducido = consistencia(gr, ap, var, val, consist)
+        dominio_reducido = consistencia(grafo, asignacion, var, val, consist)
 
         if dominio_reducido is not None:
             # Se realiza la asignación de esta variable
-            ap[var] = val
+            asignacion[var] = val
 
             # Solo para efectos de impresión
             if traza:
-                print(((len(ap) - 1) * '\t') + "{} = {}".format(var, val))
+                print(((len(asignacion) - 1) * '\t') + "{} = {}".format(var, val))
 
             # Se manda llamar en forma recursiva (búsqueda en profundidad)
-            apn = asignacion_grafo_restriccion(gr, ap, consist, traza)
+            apn = asignacion_grafo_restriccion(grafo, asignacion, consist, traza)
 
             # Restaura el dominio
-            for v in dominio_reducido.keys():
-                gr.dominio[v] = gr.dominio[v].union(dominio_reducido[v])
+            for valor in dominio_reducido:
+                grafo.dominio[valor] = grafo.dominio[valor].union(dominio_reducido[valor])
 
             # Si la asignación es completa revuelve el resultado
             if apn is not None:
                 return apn
-            del ap[var]
-    gr.backtracking += 1
+            del asignacion[var]
+    grafo.backtracking += 1
     return None
 
 
-def selecciona_variable(gr, ap):
+def selecciona_variable(grafo, asig_parcial):
     """
     Selecciona la variable a explorar, para usar dentro de
     la función asignacion_grafo_restriccion
 
-    @param gr: Objeto tipo GrafoRestriccion
-    @param ap: Un diccionario con una asignación parcial
+    @param grafo: Objeto tipo GrafoRestriccion
+    @param asig_parcial: Un diccionario con una asignación parcial
 
     @return: Una variable de gr.dominio.keys()
 
     """
     # Si no hay variables en la asignación parcial, se usa el grado heurístico
-    if len(ap) == 0:
-        return max(gr.dominio.keys(), key=lambda v: len(gr.vecinos[v]))
+    if not asig_parcial:
+        return max(grafo.dominio.keys(), key=lambda v: len(grafo.vecinos[v]))
     # Si hay variables, entonces se selecciona
     # la variable con el dominio más pequeño
-    return min([var for var in gr.dominio.keys() if var not in ap],
-               key=lambda v: len(gr.dominio[v]))
+    return min([var for var in grafo.dominio.keys() if var not in asig_parcial],
+               key=lambda v: len(grafo.dominio[v]))
 
 
-def ordena_valores(gr, ap, xi):
+def ordena_valores(grafo, asig_parcial, x_i):
     """
     Ordena los valores del dominio de una variable de acuerdo
     a los que restringen menos los dominios de las variables
     vecinas. Para ser usada dentro de la función
     asignacion_grafo_restriccion.
 
-    @param gr: Objeto tipo GrafoRestriccion
-    @param ap: Un diccionario con una asignación parcial
-    @param xi: La variable a ordenar los valores
+    @param grafo: Objeto tipo GrafoRestriccion
+    @param asig_parcial: Un diccionario con una asignación parcial
+    @param x_i: La variable a ordenar los valores
 
     @return: Un generador con los valores de gr.dominio[xi] ordenados
 
     """
-    def conflictos(vi):
-        return sum((1 for xj in gr.vecinos[xi] if xj not in ap
-                    for vj in gr.dominio[xj]
-                    if gr.restriccion((xi, vi), (xj, vj))))
-    return sorted(list(gr.dominio[xi]), key=conflictos, reverse=True)
+    def conflictos(v_i):
+        return sum((1 for x_j in grafo.vecinos[x_i] if x_j not in asig_parcial
+                    for v_j in grafo.dominio[x_j]
+                    if grafo.restriccion((x_i, v_i), (x_j, v_j))))
+    return sorted(list(grafo.dominio[x_i]), key=conflictos, reverse=True)
 
 
-def consistencia(gr, ap, xi, vi, tipo):
+def consistencia(grafo, asig_parcial, x_i, v_i, tipo):
     """
     Calcula la consistencia y reduce el dominio de las variables, de
     acuerdo al grado de la consistencia. Si la consistencia es:
@@ -181,10 +184,10 @@ def consistencia(gr, ap, xi, vi, tipo):
            como vecino una variable que redujo su valor. Para
            esto se debe usar el algoritmo AC-3.
 
-    @param gr: Objeto tipo GrafoRestriccion
-    @param ap: Un diccionario con una asignación parcial
-    @param xi: La variable a ordenar los valores
-    @param vi: Un valor que puede tomar xi
+    @param grafo: Objeto tipo GrafoRestriccion
+    @param asig_parcial: Un diccionario con una asignación parcial
+    @param x_i: La variable a ordenar los valores
+    @param v_i: Un valor que puede tomar xi
 
     @return: Un diccionario con el dominio que se redujo (como efecto
              colateral), a gr.dominio
@@ -193,29 +196,29 @@ def consistencia(gr, ap, xi, vi, tipo):
     # Primero reducimos el dominio de la variable de interes si no tiene
     # conflictos con la asignación previa.
     dom_red = {}
-    for (xj, vj) in ap.items():
-        if xj in gr.vecinos[xi] and not gr.restriccion((xi, vi), (xj, vj)):
+    for (x_j, v_j) in asig_parcial.items():
+        if x_j in grafo.vecinos[x_i] and not grafo.restriccion((x_i, v_i), (x_j, v_j)):
             return None
-    dom_red[xi] = {v for v in gr.dominio[xi] if v != vi}
-    gr.dominio[xi] = {vi}
+    dom_red[x_i] = {v for v in grafo.dominio[x_i] if v != v_i}
+    grafo.dominio[x_i] = {v_i}
 
     # Tipo 1: lo claramente sensato
     # Se ve raro la forma en que lo hice pero es para dejar mas fácil
     # el desarrollo del algoritmo de AC-3,  y dejar claras las diferencias.
     if tipo == 1:
-        pendientes = deque([(xj, xi) for xj in gr.vecinos[xi] if xj not in ap])
+        pendientes = deque([(x_j, x_i) for x_j in grafo.vecinos[x_i] if x_j not in asig_parcial])
         while pendientes:
-            xa, xb = pendientes.popleft()
-            temp = reduceAC3(xa, xb, gr)
+            x_a, x_b = pendientes.popleft()
+            temp = reduce_ac3(x_a, x_b, grafo)
             if temp:
-                if not gr.dominio[xa]:
-                    gr.dominio[xa] = temp
-                    for v in dom_red.keys():
-                        gr.dominio[v] = gr.dominio[v].union(dom_red[v])
+                if not grafo.dominio[x_a]:
+                    grafo.dominio[x_a] = temp
+                    for valor in dom_red:
+                        grafo.dominio[valor] = grafo.dominio[valor].union(dom_red[valor])
                     return None
-                if xa not in dom_red:
-                    dom_red[xa] = set({})
-                dom_red[xa] = dom_red[xa].union(temp)
+                if x_a not in dom_red:
+                    dom_red[x_a] = set({})
+                dom_red[x_a] = dom_red[x_a].union(temp)
 
     # Tipo 2: lo ya no tan claramente sensato
     # Al no estar muy bien codificado desde el punto de vista de eficiencia
@@ -234,28 +237,40 @@ def consistencia(gr, ap, xi, vi, tipo):
     return dom_red
 
 
-def reduceAC3(xa, xb, gr):
+def reduce_ac3(x_a, x_b, grafo):
+    """
+    Funcion interna para consistencia (tanto tipo 1 como tipo 2)
+
+    """
     reduccion = set([])
-    valores_xa = list(gr.dominio[xa])
-    for va in valores_xa:
-        for vb in gr.dominio[xb]:
-            if gr.restriccion((xa, va), (xb, vb)):
+    valores_xa = list(grafo.dominio[x_a])
+    for v_a in valores_xa:
+        for v_b in grafo.dominio[x_b]:
+            if grafo.restriccion((x_a, v_a), (x_b, v_b)):
                 break
         else:
-            reduccion.add(va)
-            gr.dominio[xa].discard(va)
+            reduccion.add(v_a)
+            grafo.dominio[x_a].discard(v_a)
     return reduccion
 
 
-def min_conflictos(gr, rep=100, maxit=100):
+def min_conflictos(grafo, rep=100, maxit=100):
+    """
+    La aplicación de mínimos conflictos con reinicios aleatorios
+
+    """
     for _ in range(maxit):
-        a = minimos_conflictos(gr, rep)
-        if a is not None:
-            return a
+        solucion_plausible = minimos_conflictos(grafo, rep)
+        if solucion_plausible is not None:
+            return solucion_plausible
     return None
 
 
-def minimos_conflictos(gr, rep=100):
+def minimos_conflictos(grafo, rep=100):
+    """
+    Incluir el docstring porfavor
+
+    """
     # ================================================
     #    Implementar el algoritmo de minimos conflictos
     #    y probarlo con las n-reinas
